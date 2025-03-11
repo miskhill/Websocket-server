@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Client</title>
+    <style>
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button id="connect">Connect</button>
+    <button id="disconnect" disabled>Disconnect</button>
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button id="send" disabled>Send</button>
+
+    <script>
+        let ws;
+        const messagesDiv = document.getElementById('messages');
+        const connectButton = document.getElementById('connect');
+        const disconnectButton = document.getElementById('disconnect');
+        const sendButton = document.getElementById('send');
+        const messageInput = document.getElementById('messageInput');
+
+        function addMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = message;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        connectButton.onclick = function() {
+            ws = new WebSocket('ws://localhost:3000');
+
+            ws.onopen = function() {
+                addMessage('Connected to server');
+                connectButton.disabled = true;
+                disconnectButton.disabled = false;
+                sendButton.disabled = false;
+            };
+
+            ws.onmessage = function(event) {
+                addMessage('Received: ' + event.data);
+            };
+
+            ws.onclose = function() {
+                addMessage('Disconnected from server');
+                connectButton.disabled = false;
+                disconnectButton.disabled = true;
+                sendButton.disabled = true;
+            };
+
+            ws.onerror = function(error) {
+                addMessage('Error: ' + error.message);
+            };
+        };
+
+        disconnectButton.onclick = function() {
+            ws.close();
+        };
+
+        sendButton.onclick = function() {
+            const message = messageInput.value;
+            if (message) {
+                ws.send(message);
+                addMessage('Sent: ' + message);
+                messageInput.value = '';
+            }
+        };
+
+        messageInput.onkeypress = function(event) {
+            if (event.keyCode === 13 && !sendButton.disabled) { // Enter key
+                sendButton.onclick();
+            }
+        };
+    </script>
+</body>
+</html>
